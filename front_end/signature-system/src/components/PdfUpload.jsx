@@ -6,6 +6,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pd
 
 const PdfUpload = ({ onFileUpload }) => {
   const [file, setFile] = useState(null);
+  const [isDrawingMode, setIsDrawingMode] = useState(false); // State to track drawing mode
 
   const handleFileChange = (event) => {
     const uploadedFile = event.target.files[0];
@@ -33,6 +34,7 @@ const PdfUpload = ({ onFileUpload }) => {
             <head><title>Edit PDF</title></head>
             <body style="font-family: Arial, sans-serif;">
               <div id="toolbar" style="background-color: #f0f0f0; padding: 10px; display: flex; gap: 10px;">
+                <button id="cursor-tool" style="padding: 8px;">Cursor</button>
                 <button id="draw-tool" style="padding: 8px;">Draw</button>
                 <button id="clear-tool" style="padding: 8px;">Clear</button>
                 <button id="add-text" style="padding: 8px;">Add Text</button>
@@ -40,6 +42,9 @@ const PdfUpload = ({ onFileUpload }) => {
                 <!-- Color Pickers -->
                 <input type="color" id="draw-color" style="padding: 8px;" />
                 <input type="color" id="text-color" style="padding: 8px;" />
+                <!-- Zoom Buttons -->
+                <button id="zoom-in" style="padding: 8px;">Zoom In</button>
+                <button id="zoom-out" style="padding: 8px;">Zoom Out</button>
               </div>
               <div style="display: flex; justify-content: center; margin-top: 20px; position: relative;">
                 <!-- PDF Rendering Canvas -->
@@ -106,19 +111,30 @@ const PdfUpload = ({ onFileUpload }) => {
         backgroundColor: 'transparent', // Transparent background
         width: viewport.width,
         height: viewport.height,
+        selection: true,
+        preserveObjectStacking: true,
       });
 
-      // Default color for drawing and text
-      let drawColor = '#ff0000'; // Red for drawing
-      let textColor = '#000000'; // Black for text
+      let drawColor = '#ff0000'; // Default red for drawing
+      let textColor = '#000000'; // Default black for text
+      let zoomLevel = 1.5; // Initial zoom level
 
       // Event listener to start drawing
       editWindow.document.getElementById('draw-tool').addEventListener('click', () => {
+        setIsDrawingMode(true); // Set drawing mode state
         console.log('Draw tool clicked');
         canvas.isDrawingMode = true;
         canvas.freeDrawingBrush = new editWindow.fabric.PencilBrush(canvas);
         canvas.freeDrawingBrush.width = 5;
         canvas.freeDrawingBrush.color = drawColor;
+        canvas.renderAll();
+      });
+
+      // Event listener to switch to selection cursor
+      editWindow.document.getElementById('cursor-tool').addEventListener('click', () => {
+        setIsDrawingMode(false); // Set drawing mode state to false (selection mode)
+        console.log('Cursor tool clicked');
+        canvas.isDrawingMode = false; // Disable drawing mode
         canvas.renderAll();
       });
 
@@ -133,7 +149,6 @@ const PdfUpload = ({ onFileUpload }) => {
       editWindow.document.getElementById('add-text').addEventListener('click', () => {
         console.log('Add text tool clicked');
         
-        // Create a text box that is typeable
         const text = new editWindow.fabric.Textbox('Enter text here', {
           left: 100,
           top: 100,
@@ -141,26 +156,36 @@ const PdfUpload = ({ onFileUpload }) => {
           fontSize: 30,
           fill: textColor,
           editable: true, // Make the text editable
-          hasControls: true, // Enable resizing
-          lockUniScaling: false, // Allow aspect ratio scaling
         });
 
-        // Add the text object to the canvas
         canvas.add(text);
         canvas.setActiveObject(text);
         canvas.renderAll();
       });
 
-      // Event listener to download as PNG
-      editWindow.document.getElementById('download-png').addEventListener('click', () => {
-        console.log('Download PNG clicked');
-        const imageSrc = canvas.toDataURL({ format: 'png' });
-        const a = editWindow.document.createElement('a');
-        a.href = imageSrc;
-        a.download = 'edited-image.png';
-        editWindow.document.body.appendChild(a);
-        a.click();
-        editWindow.document.body.removeChild(a);
+      // Zoom In functionality
+      editWindow.document.getElementById('zoom-in').addEventListener('click', () => {
+        zoomLevel += 0.1;
+        canvas.setZoom(zoomLevel);
+        console.log(`Zoom level: ${zoomLevel}`);
+      });
+
+      // Zoom Out functionality
+      editWindow.document.getElementById('zoom-out').addEventListener('click', () => {
+        zoomLevel = Math.max(0.1, zoomLevel - 0.1);
+        canvas.setZoom(zoomLevel);
+        console.log(`Zoom level: ${zoomLevel}`);
+      });
+
+      // Zoom using mouse wheel (with Ctrl key)
+      editWindow.document.addEventListener('wheel', (e) => {
+        if (e.ctrlKey) {
+          e.preventDefault();
+          zoomLevel += e.deltaY < 0 ? 0.1 : -0.1;
+          zoomLevel = Math.max(0.1, zoomLevel);
+          canvas.setZoom(zoomLevel);
+          console.log(`Zoom level: ${zoomLevel}`);
+        }
       });
 
       // Handle text and drawing color changes
@@ -173,31 +198,46 @@ const PdfUpload = ({ onFileUpload }) => {
 
       editWindow.document.getElementById('text-color').addEventListener('input', (e) => {
         textColor = e.target.value;
-        // Update color for new text objects
       });
 
-      // Event listener to delete selected text object when pressing delete key
-      editWindow.addEventListener('keydown', (e) => {
-        if (e.keyCode === 46) { // Delete key
-          const activeObject = canvas.getActiveObject();
-          if (activeObject && activeObject.type === 'textbox') {
-            canvas.remove(activeObject);
-          }
+      // Pan functionality: Mouse drag to move canvas
+      let isPanning = false;
+      let lastX = 0, lastY = 0;
+
+      editWindow.document.getElementById('pdf-canvas').addEventListener('mousedown', (e) => {
+        isPanning = true;
+        lastX = e.clientX;
+        lastY = e.clientY;
+      });
+
+      editWindow.document.getElementById('pdf-canvas').addEventListener('mousemove', (e) => {
+        if (isPanning) {
+          const deltaX = e.clientX - lastX;
+          const deltaY = e.clientY - lastY;
+          canvas.relativePan({ x: deltaX, y: deltaY });
+          lastX = e.clientX;
+          lastY = e.clientY;
         }
       });
+
+      editWindow.document.getElementById('pdf-canvas').addEventListener('mouseup', () => {
+        isPanning = false;
+      });
+
+      // Handle canvas drag when mouse is released
+      editWindow.document.getElementById('pdf-canvas').addEventListener('mouseleave', () => {
+        isPanning = false;
+      });
     };
+
     editWindow.document.body.appendChild(fabricScript);
   };
 
   return (
-    <div className="pdf-upload-container">
-      <h2>Upload Your PDF</h2>
+    <div>
       <input type="file" accept="application/pdf" onChange={handleFileChange} />
-      {file && <p>{file.name}</p>}
       {file && (
-        <button className="edit-button" onClick={openEditWindow}>
-          Edit This Page
-        </button>
+        <button onClick={openEditWindow}>Edit PDF</button>
       )}
     </div>
   );
