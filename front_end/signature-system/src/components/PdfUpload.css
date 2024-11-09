@@ -57,4 +57,40 @@
     margin-top: 15px;
     font-weight: 600;
   }
+ 
+ 
+  /* Edit button styling */
+  .edit-button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    margin-top: 15px;
+    font-size: 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .edit-button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Styling for the toolbar in the editing window */
+  #toolbar {
+    display: flex;
+    gap: 10px;
+    background-color: #f0f0f0;
+    padding: 10px;
+  }
+  
+  #toolbar button {
+    padding: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  
+  #toolbar button:hover {
+    background-color: #ddd;
+  }
   
