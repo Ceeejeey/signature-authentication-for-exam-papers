@@ -105,7 +105,7 @@ const PdfUpload = ({ onFileUpload }) => {
         width: viewport.width,
         height: viewport.height,
       });
-
+  
       // Event listener to start drawing
       editWindow.document.getElementById('draw-tool').addEventListener('click', () => {
         console.log('Draw tool clicked');
@@ -115,28 +115,49 @@ const PdfUpload = ({ onFileUpload }) => {
         canvas.freeDrawingBrush.color = '#ff0000';
         canvas.renderAll();
       });
-
+  
       // Event listener to clear the canvas
       editWindow.document.getElementById('clear-tool').addEventListener('click', () => {
         console.log('Clear tool clicked');
         canvas.clear();
         canvas.renderAll();
       });
-
+  
       // Event listener to add text
       editWindow.document.getElementById('add-text').addEventListener('click', () => {
         console.log('Add text tool clicked');
-        const text = new editWindow.fabric.Text('Enter text here', {
+        
+        // Create a text box that is typeable
+        const text = new editWindow.fabric.Textbox('Enter text here', {
           left: 100,
           top: 100,
           fontFamily: 'Arial',
           fontSize: 30,
           fill: '#000000',
+          editable: true, // Make the text editable
+          hasControls: true, // Enable resizing
+          lockUniScaling: false, // Allow aspect ratio scaling
         });
+  
+        // Allow text to be edited directly
+        text.set({
+          editable: true,  // Enable typing
+          selectable: true, // Allow selecting text
+          hasControls: true, // Enable resizing handles
+        });
+  
+        // Set the font size and the font weight for the text box
+        text.on('editing:entered', () => {
+          text.set('fontSize', 20);
+          canvas.renderAll();
+        });
+  
+        // Add the text object to the canvas
         canvas.add(text);
+        canvas.setActiveObject(text);
         canvas.renderAll();
       });
-
+  
       // Event listener to download as PNG
       editWindow.document.getElementById('download-png').addEventListener('click', () => {
         console.log('Download PNG clicked');
@@ -151,6 +172,7 @@ const PdfUpload = ({ onFileUpload }) => {
     };
     editWindow.document.body.appendChild(fabricScript);
   };
+  
 
   return (
     <div className="pdf-upload-container">
