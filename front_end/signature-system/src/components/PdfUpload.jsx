@@ -26,7 +26,7 @@ const PdfUpload = ({ onFileUpload }) => {
       const reader = new FileReader();
       reader.onloadend = () => {
         const pdfArrayBuffer = reader.result;
-  
+
         const editWindow = window.open('', '_blank', 'width=1000,height=800');
         editWindow.document.write(`
           <html>
@@ -37,6 +37,9 @@ const PdfUpload = ({ onFileUpload }) => {
                 <button id="clear-tool" style="padding: 8px;">Clear</button>
                 <button id="add-text" style="padding: 8px;">Add Text</button>
                 <button id="download-png" style="padding: 8px;">Download as PNG</button>
+                <!-- Color Pickers -->
+                <input type="color" id="draw-color" style="padding: 8px;" />
+                <input type="color" id="text-color" style="padding: 8px;" />
               </div>
               <div style="display: flex; justify-content: center; margin-top: 20px; position: relative;">
                 <!-- PDF Rendering Canvas -->
@@ -48,14 +51,14 @@ const PdfUpload = ({ onFileUpload }) => {
           </html>
         `);
         editWindow.document.close();
-  
+
         // Load pdf.js worker in the new window
         const pdfjsScript = editWindow.document.createElement('script');
         pdfjsScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js';
         pdfjsScript.onload = () => {
           // Set the workerSrc for pdf.js in the new window context
           editWindow.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
-  
+
           const pdfArrayBufferUint8 = new Uint8Array(pdfArrayBuffer);
           editWindow.pdfjsLib.getDocument({ data: pdfArrayBufferUint8 }).promise.then((doc) => {
             const canvasElement = editWindow.document.getElementById('pdf-viewer');
@@ -65,19 +68,19 @@ const PdfUpload = ({ onFileUpload }) => {
                 const viewport = page.getViewport({ scale: 1.5 });
                 canvasElement.height = viewport.height;
                 canvasElement.width = viewport.width;
-  
+
                 const renderContext = {
                   canvasContext: context,
                   viewport: viewport,
                 };
-  
+
                 page.render(renderContext).promise.then(() => {
                   console.log('Page rendered');
                   initializeEditingTools(editWindow, canvasElement, viewport);
                 });
               });
             };
-  
+
             renderPage(1); // Render the first page
           }).catch((error) => {
             console.error('Error loading PDF:', error);
@@ -85,13 +88,12 @@ const PdfUpload = ({ onFileUpload }) => {
         };
         editWindow.document.body.appendChild(pdfjsScript);
       };
-  
+
       reader.readAsArrayBuffer(file);
     } else {
       alert('No PDF file uploaded to edit.');
     }
   };
-  
 
   const initializeEditingTools = (editWindow, canvasElement, viewport) => {
     // Ensure fabric.js is loaded
@@ -105,24 +107,28 @@ const PdfUpload = ({ onFileUpload }) => {
         width: viewport.width,
         height: viewport.height,
       });
-  
+
+      // Default color for drawing and text
+      let drawColor = '#ff0000'; // Red for drawing
+      let textColor = '#000000'; // Black for text
+
       // Event listener to start drawing
       editWindow.document.getElementById('draw-tool').addEventListener('click', () => {
         console.log('Draw tool clicked');
         canvas.isDrawingMode = true;
         canvas.freeDrawingBrush = new editWindow.fabric.PencilBrush(canvas);
         canvas.freeDrawingBrush.width = 5;
-        canvas.freeDrawingBrush.color = '#ff0000';
+        canvas.freeDrawingBrush.color = drawColor;
         canvas.renderAll();
       });
-  
+
       // Event listener to clear the canvas
       editWindow.document.getElementById('clear-tool').addEventListener('click', () => {
         console.log('Clear tool clicked');
         canvas.clear();
         canvas.renderAll();
       });
-  
+
       // Event listener to add text
       editWindow.document.getElementById('add-text').addEventListener('click', () => {
         console.log('Add text tool clicked');
@@ -133,31 +139,18 @@ const PdfUpload = ({ onFileUpload }) => {
           top: 100,
           fontFamily: 'Arial',
           fontSize: 30,
-          fill: '#000000',
+          fill: textColor,
           editable: true, // Make the text editable
           hasControls: true, // Enable resizing
           lockUniScaling: false, // Allow aspect ratio scaling
         });
-  
-        // Allow text to be edited directly
-        text.set({
-          editable: true,  // Enable typing
-          selectable: true, // Allow selecting text
-          hasControls: true, // Enable resizing handles
-        });
-  
-        // Set the font size and the font weight for the text box
-        text.on('editing:entered', () => {
-          text.set('fontSize', 20);
-          canvas.renderAll();
-        });
-  
+
         // Add the text object to the canvas
         canvas.add(text);
         canvas.setActiveObject(text);
         canvas.renderAll();
       });
-  
+
       // Event listener to download as PNG
       editWindow.document.getElementById('download-png').addEventListener('click', () => {
         console.log('Download PNG clicked');
@@ -169,10 +162,32 @@ const PdfUpload = ({ onFileUpload }) => {
         a.click();
         editWindow.document.body.removeChild(a);
       });
+
+      // Handle text and drawing color changes
+      editWindow.document.getElementById('draw-color').addEventListener('input', (e) => {
+        drawColor = e.target.value;
+        if (canvas.isDrawingMode) {
+          canvas.freeDrawingBrush.color = drawColor;
+        }
+      });
+
+      editWindow.document.getElementById('text-color').addEventListener('input', (e) => {
+        textColor = e.target.value;
+        // Update color for new text objects
+      });
+
+      // Event listener to delete selected text object when pressing delete key
+      editWindow.addEventListener('keydown', (e) => {
+        if (e.keyCode === 46) { // Delete key
+          const activeObject = canvas.getActiveObject();
+          if (activeObject && activeObject.type === 'textbox') {
+            canvas.remove(activeObject);
+          }
+        }
+      });
     };
     editWindow.document.body.appendChild(fabricScript);
   };
-  
 
   return (
     <div className="pdf-upload-container">
