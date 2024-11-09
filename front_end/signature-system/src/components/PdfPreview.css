@@ -1,94 +1,64 @@
-
+/* PdfPreview container */
 .pdf-preview-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 20px auto;
-    max-width: 800px;
-    padding: 20px;
-    background-color: #f9f9f9;
-    border-radius: 10px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-  }
-  
-  .pdf-preview-container h3 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 15px;
-    text-align: center;
-  }
-  
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 800px;
+  margin: 20px auto;
+  width: 100%;
+}
 
-  .pdf-preview-document {
-    position: relative;
-    width: 100%;
-    border: 2px dashed #ddd;
-    background-color: #fff;
-    padding: 10px;
-    border-radius: 8px;
-    overflow: hidden;
-  }
-  
- 
-  .pdf-preview-document img {
-    cursor: move;
-    border: 1px solid #3333;
-    box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
-    border-radius: 5px;
-    transition: transform 0.2s, box-shadow 0.2s;
-  }
-  
-  .pdf-preview-document img:hover {
-    transform: scale(1.05);
-    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
-  }
-  
- 
-  .pdf-preview-container button {
-    background-color: #4a90e2;
-    color: #fff;
-    padding: 10px 20px;
-    margin: 10px 5px;
-    font-size: 1rem;
-    font-weight: 500;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.15);
-  }
-  
-  .pdf-preview-container button:hover {
-    background-color: #357ab8;
-  }
-  
-  .pdf-preview-container button:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-  }
-  
-  /* Smooth Dragging Shadow */
-  .pdf-preview-document img.dragging {
-    opacity: 0.7;
-    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
-    cursor: grabbing;
-  }
-  
-  /* For Confirm and Reset Position Buttons */
-  .pdf-preview-container button#confirm-position {
-    background-color: #28a745;
-  }
-  
-  .pdf-preview-container button#confirm-position:hover {
-    background-color: #218838;
-  }
-  
-  .pdf-preview-container button#reset-position {
-    background-color: #ffc107;
-  }
-  
-  .pdf-preview-container button#reset-position:hover {
-    background-color: #e0a800;
-  }
-  
+.pdf-preview-container h1 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.pdf-preview-container .react-pdf__Document {
+  width: 100%;
+  max-width: 750px;
+  margin: 20px 0;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.pdf-preview-container .react-pdf__Page {
+  display: block;
+  margin: 0 auto;
+}
+
+.page-navigation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  gap: 10px;
+}
+
+.page-navigation button {
+  padding: 10px 20px;
+  font-size: 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.page-navigation button:hover {
+  background-color: #0056b3;
+}
+
+.page-navigation span {
+  font-size: 1rem;
+  color: #555;
+  font-weight: 500;
+}
