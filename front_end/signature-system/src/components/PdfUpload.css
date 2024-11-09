@@ -93,4 +93,12 @@
   #toolbar button:hover {
     background-color: #ddd;
   }
+  #pdf-viewer {
+    position: absolute;
+    z-index: 1;
+  }
   
+  #pdf-canvas {
+    position: absolute;
+    z-index: 2;
+  }
