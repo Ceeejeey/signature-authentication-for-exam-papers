@@ -1,29 +1,32 @@
+import React, { useState } from 'react';
+import './PdfUpload.css';  // Import the CSS file
 
-import React from 'react';
-import './PdfUpload.css';
+const PdfUpload = ({ onFileUpload }) => {
+  const [file, setFile] = useState(null);
 
-const PdfUpload = ({ onUpload }) => {
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file && file.type === "application/pdf") {
-      onUpload(file);
-    } else {
-      alert("Please upload a PDF file.");
+  // Handle file selection
+  const handleFileChange = (event) => {
+    const uploadedFile = event.target.files[0];
+    if (uploadedFile) {
+      console.log('Uploaded file:', uploadedFile);  // Check the file details
+      if (uploadedFile.type === 'application/pdf') {
+        setFile(uploadedFile);
+        onFileUpload(uploadedFile);  // Pass the valid file to the parent
+      } else {
+        alert('Please upload a valid PDF file');
+      }
     }
   };
 
   return (
     <div className="pdf-upload-container">
-      <h3>Upload Exam Paper (PDF)</h3>
-      <input 
-        type="file" 
-        id="pdf-upload" 
-        accept="application/pdf" 
-        className="file-input" 
-        onChange={handleFileChange} 
+      <h2>Upload Your PDF</h2>
+      <input
+        type="file"
+        accept="application/pdf"
+        onChange={handleFileChange}
       />
-      <br />
-      <label htmlFor="pdf-upload" className="upload-button">Choose PDF</label>
+      {file && <p>{file.name}</p>}  {/* Show the file name after selection */}
     </div>
   );
 };
