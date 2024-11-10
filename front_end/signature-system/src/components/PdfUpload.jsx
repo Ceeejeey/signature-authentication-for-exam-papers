@@ -36,7 +36,7 @@ const PdfUpload = ({ onFileUpload }) => {
 
             </head>
                         <body style="font-family: Arial, sans-serif; margin: 0; background-color: #f4f7fc;">
-              <div id="toolbar" style="background-color: #ffffff; padding: 15px 20px; display: flex; gap: 15px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); border-bottom: 2px solid #e0e0e0; position: sticky; top: 0;">
+              <div id="toolbar" style="background-color: #ffffff; padding: 15px 20px; display: flex; gap: 15px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); border-bottom: 2px solid #e0e0e0; position: relative; top: 0;">
                 <button id="cursor-tool" style="padding: 10px 15px; background-color: #f0f0f0; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s;">
                   <i class="fa fa-mouse-pointer"></i> Cursor
                 </button>
@@ -52,7 +52,7 @@ const PdfUpload = ({ onFileUpload }) => {
                 <button id="download-png" style="padding: 10px 15px; background-color: #f0f0f0; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s;">
                   <i class="fa fa-download"></i> Download as PNG
                 </button>
-                <input type="color" id="draw-color" style="padding: 10px; background-color: transparent; border: none; border-radius: 5px; cursor: pointer;">
+                <input type="color" id="draw-color" style="padding: 10px; background-color: transparent; border: none; border-radius: 5px; cursor: pointer;" >
                 <input type="color" id="text-color" style="padding: 10px; background-color: transparent; border: none; border-radius: 5px; cursor: pointer;">
                 <button id="zoom-in" style="padding: 10px 15px; background-color: #f0f0f0; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s;">
                   <i class="fa fa-search-plus"></i> Zoom In
@@ -263,13 +263,67 @@ const PdfUpload = ({ onFileUpload }) => {
   };
 
   return (
-    <div>
-      <input type="file" accept="application/pdf" onChange={handleFileChange} />
+    <div style={containerStyle}>
+      <input 
+        type="file" 
+        accept="application/pdf" 
+        onChange={handleFileChange} 
+        style={fileInputStyle}
+      />
       {file && (
-        <button onClick={openEditWindow}>Edit PDF</button>
+        <button onClick={openEditWindow} style={buttonStyle}>
+          Edit PDF
+        </button>
       )}
     </div>
   );
+  
+  
+};
+const containerStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '20px',
+  backgroundColor: '#f9f9f9',
+  borderRadius: '8px',
+  boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+  maxWidth: '400px',
+  margin: 'auto',
+};
+
+const fileInputStyle = {
+  padding: '10px',
+  marginBottom: '20px',
+  border: '2px solid #007bff',
+  borderRadius: '5px',
+  outline: 'none',
+  width: '100%',
+  maxWidth: '350px',
+  fontSize: '16px',
+  backgroundColor: '#ffffff',
+  cursor: 'pointer',
+};
+
+const buttonStyle = {
+  padding: '12px 20px',
+  backgroundColor: '#007bff',
+  color: '#ffffff',
+  border: 'none',
+  borderRadius: '5px',
+  cursor: 'pointer',
+  fontSize: '16px',
+  transition: 'background-color 0.3s ease, transform 0.3s ease',
+};
+
+const buttonHoverStyle = {
+  backgroundColor: '#0056b3',
+  transform: 'scale(1.05)',
+};
+
+const fileInputHoverStyle = {
+  borderColor: '#0056b3',
 };
 
 export default PdfUpload;
