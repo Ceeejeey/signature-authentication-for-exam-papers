@@ -31,27 +31,56 @@ const PdfUpload = ({ onFileUpload }) => {
         const editWindow = window.open('', '_blank', 'width=1000,height=800');
         editWindow.document.write(`
           <html>
-            <head><title>Edit PDF</title></head>
-            <body style="font-family: Arial, sans-serif;">
-              <div id="toolbar" style="background-color: #f0f0f0; padding: 10px; display: flex; gap: 10px;">
-                <button id="cursor-tool" style="padding: 8px;">Cursor</button>
-                <button id="draw-tool" style="padding: 8px;">Draw</button>
-                <button id="clear-tool" style="padding: 8px;">Clear</button>
-                <button id="add-text" style="padding: 8px;">Add Text</button>
-                <button id="download-png" style="padding: 8px;">Download as PNG</button>
-                <!-- Color Pickers -->
-                <input type="color" id="draw-color" style="padding: 8px;" />
-                <input type="color" id="text-color" style="padding: 8px;" />
-                <!-- Zoom Buttons -->
-                <button id="zoom-in" style="padding: 8px;">Zoom In</button>
-                <button id="zoom-out" style="padding: 8px;">Zoom Out</button>
+            <head><title>Edit PDF</title>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+            </head>
+                        <body style="font-family: Arial, sans-serif; margin: 0; background-color: #f4f7fc;">
+              <div id="toolbar" style="background-color: #ffffff; padding: 15px 20px; display: flex; gap: 15px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); border-bottom: 2px solid #e0e0e0; position: sticky; top: 0;">
+                <button id="cursor-tool" style="padding: 10px 15px; background-color: #f0f0f0; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s;">
+                  <i class="fa fa-mouse-pointer"></i> Cursor
+                </button>
+                <button id="draw-tool" style="padding: 10px 15px; background-color: #f0f0f0; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s;">
+                  <i class="fa fa-pencil-alt"></i> Draw
+                </button>
+                <button id="clear-tool" style="padding: 10px 15px; background-color: #f0f0f0; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s;">
+                  <i class="fa fa-eraser"></i> Clear
+                </button>
+                <button id="add-text" style="padding: 10px 15px; background-color: #f0f0f0; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s;">
+                  <i class="fa fa-font"></i> Add Text
+                </button>
+                <button id="download-png" style="padding: 10px 15px; background-color: #f0f0f0; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s;">
+                  <i class="fa fa-download"></i> Download as PNG
+                </button>
+                <input type="color" id="draw-color" style="padding: 10px; background-color: transparent; border: none; border-radius: 5px; cursor: pointer;">
+                <input type="color" id="text-color" style="padding: 10px; background-color: transparent; border: none; border-radius: 5px; cursor: pointer;">
+                <button id="zoom-in" style="padding: 10px 15px; background-color: #f0f0f0; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s;">
+                  <i class="fa fa-search-plus"></i> Zoom In
+                </button>
+                <button id="zoom-out" style="padding: 10px 15px; background-color: #f0f0f0; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s;">
+                  <i class="fa fa-search-minus"></i> Zoom Out
+                </button>
               </div>
+              
               <div style="display: flex; justify-content: center; margin-top: 20px; position: relative;">
                 <!-- PDF Rendering Canvas -->
                 <canvas id="pdf-viewer" style="border: 1px solid #ddd; position: absolute;"></canvas>
                 <!-- Drawing Canvas (Above PDF) -->
                 <canvas id="pdf-canvas" style="border: 1px solid #ddd; position: absolute; z-index: 2;"></canvas>
               </div>
+
+              <style>
+                button:hover {
+                  background-color: #e0e0e0;
+                }
+
+                input[type="color"]:focus, button:focus {
+                  outline: none;
+                  border: 2px solid #007bff;
+                }
+              </style>
+
+
             </body>
           </html>
         `);
@@ -148,7 +177,7 @@ const PdfUpload = ({ onFileUpload }) => {
       // Event listener to add text
       editWindow.document.getElementById('add-text').addEventListener('click', () => {
         console.log('Add text tool clicked');
-        
+
         const text = new editWindow.fabric.Textbox('Enter text here', {
           left: 100,
           top: 100,
