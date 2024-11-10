@@ -29,13 +29,17 @@ const PdfUpload = ({ onFileUpload }) => {
         const pdfArrayBuffer = reader.result;
 
         const editWindow = window.open('', '_blank', 'width=1000,height=800');
+        if (!editWindow) {
+          alert('Failed to open the edit window. Please allow popups for this site.');
+          return;
+        }
+
         editWindow.document.write(`
           <html>
             <head><title>Edit PDF</title>
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
             </head>
-                        <body style="font-family: Arial, sans-serif; margin: 0; background-color: #f4f7fc;">
+            <body style="font-family: Arial, sans-serif; margin: 0; background-color: #f4f7fc;">
               <div id="toolbar" style="background-color: #ffffff; padding: 15px 20px; display: flex; gap: 15px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); border-bottom: 2px solid #e0e0e0; position: relative; top: 0;">
                 <button id="cursor-tool" style="padding: 10px 15px; background-color: #f0f0f0; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s;">
                   <i class="fa fa-mouse-pointer"></i> Cursor
@@ -49,17 +53,12 @@ const PdfUpload = ({ onFileUpload }) => {
                 <button id="add-text" style="padding: 10px 15px; background-color: #f0f0f0; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s;">
                   <i class="fa fa-font"></i> Add Text
                 </button>
-                <button id="download-png" style="padding: 10px 15px; background-color: #f0f0f0; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s;">
-                  <i class="fa fa-download"></i> Download as PNG
+                <button id="add-signature" style="padding: 10px 15px; background-color: #f0f0f0; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s;">
+                  <i class="fa fa-signature"></i> Add Signature
                 </button>
-                <input type="color" id="draw-color" style="padding: 10px; background-color: transparent; border: none; border-radius: 5px; cursor: pointer;" >
-                <input type="color" id="text-color" style="padding: 10px; background-color: transparent; border: none; border-radius: 5px; cursor: pointer;">
-                <button id="zoom-in" style="padding: 10px 15px; background-color: #f0f0f0; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s;">
-                  <i class="fa fa-search-plus"></i> Zoom In
-                </button>
-                <button id="zoom-out" style="padding: 10px 15px; background-color: #f0f0f0; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s;">
-                  <i class="fa fa-search-minus"></i> Zoom Out
-                </button>
+                <input type="color" id="draw-color" style="padding: 10px; background-color: transparent; border: none; border-radius: 5px; cursor: pointer;" title='color of draw tool' >
+                <input type="color" id="text-color" style="padding: 10px; background-color: transparent; border: none; border-radius: 5px; cursor: pointer;" title='color of text'>
+                
               </div>
               
               <div style="display: flex; justify-content: center; margin-top: 20px; position: relative;">
@@ -79,8 +78,6 @@ const PdfUpload = ({ onFileUpload }) => {
                   border: 2px solid #007bff;
                 }
               </style>
-
-
             </body>
           </html>
         `);
@@ -97,9 +94,11 @@ const PdfUpload = ({ onFileUpload }) => {
           editWindow.pdfjsLib.getDocument({ data: pdfArrayBufferUint8 }).promise.then((doc) => {
             const canvasElement = editWindow.document.getElementById('pdf-viewer');
             const context = canvasElement.getContext('2d');
-            const renderPage = (pageNum) => {
+            let currentZoomLevel = 1.5; // Initial zoom level
+
+            const renderPage = (pageNum, zoomLevel) => {
               doc.getPage(pageNum).then((page) => {
-                const viewport = page.getViewport({ scale: 1.5 });
+                const viewport = page.getViewport({ scale: zoomLevel });
                 canvasElement.height = viewport.height;
                 canvasElement.width = viewport.width;
 
@@ -110,12 +109,37 @@ const PdfUpload = ({ onFileUpload }) => {
 
                 page.render(renderContext).promise.then(() => {
                   console.log('Page rendered');
-                  initializeEditingTools(editWindow, canvasElement, viewport);
+                  initializeEditingTools(editWindow, canvasElement, viewport, zoomLevel);
                 });
               });
             };
 
-            renderPage(1); // Render the first page
+            renderPage(1, currentZoomLevel); // Render the first page
+
+            // Zoom In functionality
+            editWindow.document.getElementById('zoom-in').addEventListener('click', () => {
+              currentZoomLevel += 0.1;
+              renderPage(1, currentZoomLevel);
+              console.log(`Zoom level: ${currentZoomLevel}`);
+            });
+
+            // Zoom Out functionality
+            editWindow.document.getElementById('zoom-out').addEventListener('click', () => {
+              currentZoomLevel = Math.max(0.1, currentZoomLevel - 0.1);
+              renderPage(1, currentZoomLevel);
+              console.log(`Zoom level: ${currentZoomLevel}`);
+            });
+
+            // Zoom using mouse wheel (with Ctrl key)
+            editWindow.document.addEventListener('wheel', (e) => {
+              if (e.ctrlKey) {
+                e.preventDefault();
+                currentZoomLevel += e.deltaY < 0 ? 0.1 : -0.1;
+                currentZoomLevel = Math.max(0.1, currentZoomLevel);
+                renderPage(1, currentZoomLevel);
+                console.log(`Zoom level: ${currentZoomLevel}`);
+              }
+            });
           }).catch((error) => {
             console.error('Error loading PDF:', error);
           });
@@ -129,10 +153,10 @@ const PdfUpload = ({ onFileUpload }) => {
     }
   };
 
-  const initializeEditingTools = (editWindow, canvasElement, viewport) => {
+  const initializeEditingTools = (editWindow, canvasElement, viewport, zoomLevel) => {
     // Ensure fabric.js is loaded
     const fabricScript = editWindow.document.createElement('script');
-    fabricScript.src = 'https://cdn.jsdelivr.net/npm/fabric@latest/dist/index.min.js';
+    fabricScript.src = 'https://cdn.jsdelivr.net/npm/fabric@latest/dist/fabric.min.js';
     fabricScript.onload = () => {
       // Initialize Fabric Canvas after Fabric.js is loaded
       const canvas = new editWindow.fabric.Canvas(editWindow.document.getElementById('pdf-canvas'), {
@@ -146,7 +170,6 @@ const PdfUpload = ({ onFileUpload }) => {
 
       let drawColor = '#ff0000'; // Default red for drawing
       let textColor = '#000000'; // Default black for text
-      let zoomLevel = 1.5; // Initial zoom level
 
       // Event listener to start drawing
       editWindow.document.getElementById('draw-tool').addEventListener('click', () => {
@@ -192,29 +215,41 @@ const PdfUpload = ({ onFileUpload }) => {
         canvas.renderAll();
       });
 
-      // Zoom In functionality
-      editWindow.document.getElementById('zoom-in').addEventListener('click', () => {
-        zoomLevel += 0.1;
-        canvas.setZoom(zoomLevel);
-        console.log(`Zoom level: ${zoomLevel}`);
-      });
-
-      // Zoom Out functionality
-      editWindow.document.getElementById('zoom-out').addEventListener('click', () => {
-        zoomLevel = Math.max(0.1, zoomLevel - 0.1);
-        canvas.setZoom(zoomLevel);
-        console.log(`Zoom level: ${zoomLevel}`);
-      });
-
-      // Zoom using mouse wheel (with Ctrl key)
-      editWindow.document.addEventListener('wheel', (e) => {
-        if (e.ctrlKey) {
-          e.preventDefault();
-          zoomLevel += e.deltaY < 0 ? 0.1 : -0.1;
-          zoomLevel = Math.max(0.1, zoomLevel);
-          canvas.setZoom(zoomLevel);
-          console.log(`Zoom level: ${zoomLevel}`);
+      // Event listener to add signature
+      editWindow.document.getElementById('add-signature').addEventListener('click', () => {
+        const signatureWindow = window.open('', '_blank', 'width=400,height=200');
+        if (!signatureWindow) {
+          alert('Failed to open the signature window. Please allow popups for this site.');
+          return;
         }
+
+        signatureWindow.document.write(`
+          <html>
+            <head><title>Draw Signature</title></head>
+            <body style="font-family: Arial, sans-serif; margin: 0; background-color: #f4f7fc;">
+              <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                <canvas id="signature-canvas" width="300" height="100" style="border: 1px solid #ddd;"></canvas>
+                <button id="save-signature" style="margin-top: 10px; padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">Save Signature</button>
+              </div>
+              <script src="https://cdn.jsdelivr.net/npm/fabric@latest/dist/fabric.min.js"></script>
+              <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                  const signatureCanvas = new fabric.Canvas('signature-canvas');
+                  signatureCanvas.isDrawingMode = true;
+                  signatureCanvas.freeDrawingBrush.width = 2;
+                  signatureCanvas.freeDrawingBrush.color = '#000000';
+
+                  document.getElementById('save-signature').addEventListener('click', function() {
+                    const signatureDataUrl = signatureCanvas.toDataURL();
+                    window.opener.addSignatureToCanvas(signatureDataUrl);
+                    window.close();
+                  });
+                });
+              </script>
+            </body>
+          </html>
+        `);
+        signatureWindow.document.close();
       });
 
       // Handle text and drawing color changes
@@ -257,9 +292,32 @@ const PdfUpload = ({ onFileUpload }) => {
       editWindow.document.getElementById('pdf-canvas').addEventListener('mouseleave', () => {
         isPanning = false;
       });
+
+      // Adjust the canvas zoom level
+      canvas.setZoom(zoomLevel);
+
+      // Make the fabric object accessible in the main window
+      window.editWindowCanvas = canvas;
+      window.editWindowFabric = editWindow.fabric;
     };
 
     editWindow.document.body.appendChild(fabricScript);
+  };
+
+  window.addSignatureToCanvas = (signatureDataUrl) => {
+    const canvas = window.editWindowCanvas;
+    const fabric = window.editWindowFabric;
+    const signatureImg = new fabric.Image.fromURL(signatureDataUrl, (img) => {
+      img.set({
+        left: 100,
+        top: 100,
+        scaleX: 0.5,
+        scaleY: 0.5,
+      });
+      canvas.add(img);
+      canvas.setActiveObject(img);
+      canvas.renderAll();
+    });
   };
 
   return (
@@ -277,9 +335,8 @@ const PdfUpload = ({ onFileUpload }) => {
       )}
     </div>
   );
-  
-  
 };
+
 const containerStyle = {
   display: 'flex',
   flexDirection: 'column',
