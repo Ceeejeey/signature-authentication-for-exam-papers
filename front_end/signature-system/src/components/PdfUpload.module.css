@@ -1,0 +1,66 @@
+.pdf-upload-button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.pdf-upload-button:hover {
+  background-color: #45a049;
+}
+
+.pdf-edit-body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f5f5f5;
+}
+
+.pdf-toolbar {
+  display: flex;
+  justify-content: space-between;
+  background-color: #333;
+  padding: 12px;
+  color: #fff;
+  font-size: 14px;
+}
+
+.pdf-button {
+  background: transparent;
+  color: #fff;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.pdf-button:hover {
+  background-color: #555;
+}
+
+.pdf-color-picker {
+  margin-left: 10px;
+  border: 1px solid #ccc;
+}
+
+.pdf-viewer-container {
+  position: relative;
+  margin-top: 20px;
+}
+
+.pdf-canvas {
+  width: 100%;
+  height: auto;
+  background-color: white;
+}
+
+.drawing-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
