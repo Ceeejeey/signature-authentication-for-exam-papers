@@ -1,0 +1,38 @@
+.pdf-upload {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background-color: #1e1e2e;
+    color: #ffffff;
+  }
+  
+  .pdf-canvas {
+    border: 1px solid #3b3c4d;
+    margin: 10px 0;
+  }
+  
+  .navigation {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .navigation button {
+    background: #3b3c4d;
+    border: none;
+    padding: 8px 12px;
+    color: #ffffff;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  
+  .navigation button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .navigation span {
+    color: #ffffff;
+  }
+  

@@ -1,114 +1,26 @@
-/* Dashboard Wrapper */
 .dashboard {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 80%;
-    max-width: 1000px;
-    margin: 20px auto;
-    padding: 20px;
-    background-color: #ffffff;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-    font-family: Arial, sans-serif;
-  }
-  
-  /* Header */
-  .dashboard h2 {
-    font-size: 1.8em;
-    color: #333;
-    margin-bottom: 20px;
-    text-align: center;
-    font-weight: 600;
-  }
-  
-  /* Section Titles */
-  .dashboard h3 {
-    font-size: 1.5em;
-    color: #555;
-    margin-top: 20px;
-    margin-bottom: 10px;
-    font-weight: 500;
-    border-bottom: 2px solid #ddd;
-    padding-bottom: 5px;
-    text-align: left;
-    width: 100%;
-  }
-  
-  /* Upload and Signature Sections */
-  .input-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    margin: 10px 0;
-  }
-  
-  .input-section input[type="file"] {
-    margin-top: 10px;
-    padding: 8px;
-    font-size: 1em;
-    cursor: pointer;
-  }
-  
-  /* Signature Canvas */
-  .sigCanvas {
-    border: 2px dashed #ccc;
-    border-radius: 5px;
-    margin-top: 10px;
-  }
-  
-  /* Preview Section */
-  .pdf-preview {
-    position: relative;
-    margin-top: 20px;
-    width: 100%;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    overflow: hidden;
-    padding: 10px;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-  }
-  
-  .signature-overlay {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-  }
-  
-  /* Buttons */
-  .button {
-    display: inline-block;
-    padding: 10px 20px;
-    font-size: 1em;
-    font-weight: 500;
-    color: #ffffff;
-    background-color: #4CAF50;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: 15px;
-    transition: background-color 0.3s ease;
-  }
-  
-  .button:hover {
-    background-color: #45a049;
-  }
-  
-  .button:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-  }
-  
-  /* Responsive Adjustments */
-  @media (max-width: 768px) {
-    .dashboard {
-      width: 95%;
-    }
-  
-    .pdf-preview {
-      font-size: 0.9em;
-    }
-  }
-  
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #1e1e2e;
+  color: #ffffff;
+}
+
+.content {
+  display: flex;
+  flex-grow: 1;
+  overflow: hidden;
+}
+.dashboard .content {
+  display: flex;
+  /* margin-top: 70px; Ensure space for the TopToolbar */
+}
+
+.content .pdf-viewer {
+  flex-grow: 1;
+  margin-right: 250px; /* Space for the right sidebar */
+}
+
+.content .left-sidebar {
+  flex-shrink: 0;
+}

@@ -1,23 +1,27 @@
-import React, { useState } from 'react';
-import PdfUpload from '../components/PdfUpload';
-import PdfPreview from '../components/PdfPreview';
+import React, { useState } from "react";
+import TopToolbar from "../components/TopToolbar";
+import LeftSidebar from "../components/LeftSidebar";
+import PdfEditor from "../components/PdfEditor"; // Replace PDFViewer with PdfEditor
+import RightSidebar from "../components/RightSidebar";
+import "./css/dashboard.css";
 
 const LecturerDashboard = () => {
-  const [pdfFile, setPdfFile] = useState(null);
+  const [selectedFileUrl, setSelectedFileUrl] = useState(null);
 
-  // Handle the uploaded file from PdfUpload
+  // Handle file upload, create a URL, and set it for PdfEditor
   const handleFileUpload = (file) => {
-    setPdfFile(file); // Set the file directly, no need for URL.createObjectURL
+    const fileUrl = URL.createObjectURL(file);
+    setSelectedFileUrl(fileUrl);
   };
 
-  // Check if the file is being set correctly
-console.log("pdfFile in LecturerDashboard:", pdfFile);
-
   return (
-    <div>
-      <h1>Upload and Preview PDF</h1>
-      <PdfUpload onFileUpload={handleFileUpload} />
-      {pdfFile && <PdfPreview pdfFile={pdfFile} />}
+    <div className="dashboard">
+      <TopToolbar onUpload={handleFileUpload} />
+      <div className="content">
+        <LeftSidebar />
+        <PdfEditor fileUrl={selectedFileUrl} /> {/* Pass fileUrl to PdfEditor */}
+        <RightSidebar />
+      </div>
     </div>
   );
 };
