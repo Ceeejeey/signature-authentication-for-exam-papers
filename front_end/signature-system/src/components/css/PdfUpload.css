@@ -1,38 +1,81 @@
+/* General PDF Upload Page Styling */
 .pdf-upload {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-    background-color: #1e1e2e;
-    color: #ffffff;
-  }
-  
-  .pdf-canvas {
-    border: 1px solid #3b3c4d;
-    margin: 10px 0;
-  }
-  
-  .navigation {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  
-  .navigation button {
-    background: #3b3c4d;
-    border: none;
-    padding: 8px 12px;
-    color: #ffffff;
-    cursor: pointer;
-    border-radius: 4px;
-  }
-  
-  .navigation button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  
-  .navigation span {
-    color: #ffffff;
-  }
-  
+  font-family: 'Arial', sans-serif;
+  background-color: #121212; 
+  color: #e0e0e0; 
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+/* Top Navbar Styling */
+.top-navbar {
+  width: 100%;
+  background-color: #1e1e1e; 
+  color: #d3d3d3;
+  padding: 15px;
+  text-align: center;
+  border-bottom: 2px solid #3b3b3b; 
+}
+
+.top-navbar h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+/* Drag-and-Drop Container */
+.drag-drop-container {
+  background-color: #2a2a2a; 
+  border: 2px dashed #d3d3d3; 
+  border-radius: 8px;
+  width: 60%;
+  height: 40%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  margin-top: 100px;
+}
+
+.drag-drop-container:hover {
+  background-color: #333333; 
+}
+
+.drag-drop-message p {
+  color: #d3d3d3; 
+  margin: 10px 0;
+  font-size: 1.2rem;
+}
+
+/* Upload Button */
+.upload-button {
+  background-color: #3b3b3b; 
+  color: #d3d3d3; 
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  text-decoration: none;
+  border: 1px solid #d3d3d3; 
+  transition: all 0.3s ease-in-out;
+}
+
+.upload-button:hover {
+  background-color: #d3d3d3; 
+  color: #121212; 
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+/* Viewer Container */
+.viewer-container {
+  width: 100%;
+  height: 100vh; /* Adjust height considering navbar */
+}
