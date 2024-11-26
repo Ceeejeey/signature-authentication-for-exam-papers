@@ -1,86 +1,93 @@
-import React, { useState, useRef } from "react";
-import { pdfjs } from "react-pdf";
-import "./css/PdfUpload.css";
-
-pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
+import React, { useRef, useEffect, useState } from 'react';
+import WebViewer from '@pdftron/webviewer';
+import './css/PdfUpload.css';
 
 const PdfUpload = () => {
-  const [pdf, setPdf] = useState(null);
-  const [pageNumber, setPageNumber] = useState(1);
-  const [numPages, setNumPages] = useState(null);
-  const canvasRef = useRef(null);
+  const viewerRef = useRef(null);
+  const [instance, setInstance] = useState(null);
+  const [isFileUploaded, setIsFileUploaded] = useState(false);
 
-  // Handle PDF file upload and render the first page
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file && file.type === "application/pdf") {
-      const fileReader = new FileReader();
-      fileReader.onload = (e) => {
-        const typedarray = new Uint8Array(e.target.result);
-        pdfjs.getDocument(typedarray).promise.then((pdfDoc) => {
-          setPdf(pdfDoc);
-          setNumPages(pdfDoc.numPages);
-          setPageNumber(1);
-          renderPage(pdfDoc, 1);
-        });
-      };
-      fileReader.readAsArrayBuffer(file);
-    } else {
-      alert("Please upload a valid PDF file.");
-    }
-  };
-
-  // Render a specific page on the canvas
-  const renderPage = (pdfDoc, pageNum) => {
-    pdfDoc.getPage(pageNum).then((page) => {
-      const viewport = page.getViewport({ scale: 1.5 });
-      const canvas = canvasRef.current;
-      const context = canvas.getContext("2d");
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-
-      const renderContext = {
-        canvasContext: context,
-        viewport: viewport,
-      };
-      page.render(renderContext);
+  useEffect(() => {
+    // Initialize WebViewer without loading a default document
+    WebViewer(
+      {
+        path: '/webviewer/lib', 
+        licenseKey: 'demo:1731319649045:7efeacdc03000000002f099e3784e7ba3fa6cdf24a2a0054191be5fdd1',
+      },
+      viewerRef.current
+    ).then((webViewerInstance) => {
+      setInstance(webViewerInstance);
     });
-  };
+  }, []);
 
-  // Navigation to the previous page
-  const goToPrevPage = () => {
-    if (pageNumber > 1) {
-      setPageNumber(pageNumber - 1);
-      renderPage(pdf, pageNumber - 1);
+  const handleFileUpload = (file) => {
+    if (file && file.type === 'application/pdf') {
+      setIsFileUploaded(true); 
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const buffer = e.target.result;
+        instance.UI.loadDocument(buffer, { filename: file.name });
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      alert('Please upload a valid PDF file.');
     }
   };
 
-  // Navigation to the next page
-  const goToNextPage = () => {
-    if (pageNumber < numPages) {
-      setPageNumber(pageNumber + 1);
-      renderPage(pdf, pageNumber + 1);
-    }
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer.files[0];
+    handleFileUpload(file);
+  };
+
+  const handleFileInputChange = (e) => {
+    const file = e.target.files[0];
+    handleFileUpload(file);
   };
 
   return (
     <div className="pdf-upload">
-      <input type="file" accept="application/pdf" onChange={handleFileChange} />
-      <canvas ref={canvasRef} className="pdf-canvas"></canvas>
+      {/* Top Navbar */}
+      <div className="top-navbar">
+        <h1>Welcome to the PDF Editor</h1>
+      </div>
 
-      {pdf && (
-        <div className="navigation">
-          <button onClick={goToPrevPage} disabled={pageNumber <= 1}>
-            Previous
-          </button>
-          <span>
-            Page {pageNumber} of {numPages}
-          </span>
-          <button onClick={goToNextPage} disabled={pageNumber >= numPages}>
-            Next
-          </button>
+      {/* Drag and Drop Section */}
+      {!isFileUploaded && (
+        <div
+          className="drag-drop-container"
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+        >
+          <div className="drag-drop-message">
+            <p>Drag and drop your PDF here</p>
+            <p>or</p>
+            <label htmlFor="file-input" className="upload-button">
+              Browse Files
+            </label>
+            <input
+              id="file-input"
+              type="file"
+              accept="application/pdf"
+              onChange={handleFileInputChange}
+              className="hidden-file-input"
+            />
+          </div>
         </div>
       )}
+
+      {/* Viewer Container */}
+      <div
+        className="viewer-container"
+        ref={viewerRef}
+        style={{ display: isFileUploaded ? 'block' : 'none' }}
+      ></div>
     </div>
   );
 };
