@@ -4,25 +4,61 @@ import './css/PdfUpload.css';
 
 const PdfUpload = () => {
   const viewerRef = useRef(null);
+  const observedDivRef = useRef(null);
+  const resizingDelayTimer = useRef(null);
+  const [divWidth, setDivWidth] = useState(0);
   const [instance, setInstance] = useState(null);
   const [isFileUploaded, setIsFileUploaded] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [recipientEmail, setRecipientEmail] = useState('');
   const [message, setMessage] = useState('');
+  const [password, setPassword] = useState('');
+  const [currentPageNumber, setCurrentPageNumber] = useState(null);
+  const [isSending, setIsSending] = useState(false);  // State to track sending status
 
+  // ResizeObserver to track div width
   useEffect(() => {
-    // Initialize WebViewer without loading a default document
+    const observer = new ResizeObserver(() => {
+      clearTimeout(resizingDelayTimer.current);
+      resizingDelayTimer.current = setTimeout(() => {
+        if (observedDivRef.current) {
+          setDivWidth(observedDivRef.current.clientWidth); // Update width state
+        }
+      }, 100);
+    });
+
+    if (observedDivRef.current) {
+      observer.observe(observedDivRef.current);
+    }
+
+    return () => {
+      if (observer && observedDivRef.current) {
+        observer.unobserve(observedDivRef.current);
+      }
+    };
+  }, []);
+
+  // Initialize WebViewer
+  useEffect(() => {
     WebViewer(
       {
         path: '/webviewer/lib',
         licenseKey: 'demo:1731319649045:7efeacdc03000000002f099e3784e7ba3fa6cdf24a2a0054191be5fdd1',
+        fullAPI: true,
       },
       viewerRef.current
     ).then((webViewerInstance) => {
       setInstance(webViewerInstance);
+
+      // Initialize document viewer and set page number change listener
+      const documentViewer = webViewerInstance.Core.documentViewer;
+      documentViewer.addEventListener('pageNumberUpdated', (e) => {
+        setCurrentPageNumber(e.pageNumber);
+      });
     });
   }, []);
 
+  // Handle file upload
   const handleFileUpload = (file) => {
     if (file && file.type === 'application/pdf') {
       setIsFileUploaded(true);
@@ -54,68 +90,106 @@ const PdfUpload = () => {
     handleFileUpload(file);
   };
 
+  // Handle inserting a stamp or signature at the correct mouse position
+  const handleInsert = (event) => {
+    if (!instance || !currentPageNumber) return;
+
+    const viewer = instance.Core.documentViewer;
+    const displayModeManager = viewer.getDisplayModeManager();
+    const displayMode = displayModeManager.getDisplayMode();
+
+    const mouseX = event.clientX;
+    const mouseY = event.clientY;
+
+    // Get page number at mouse position
+    const pageNumber = displayMode.getPageAtPoint(mouseX, mouseY);
+    if (pageNumber !== currentPageNumber) return;
+
+    // Convert screen coordinates to PDF coordinates
+    const pdfCoordinates = displayMode.windowToPageCoordinates(pageNumber, mouseX, mouseY);
+
+    const annotation = new instance.Core.Annotations.StampAnnotation();
+    annotation.PageNumber = pageNumber;
+    annotation.X = pdfCoordinates.x;
+    annotation.Y = pdfCoordinates.y;
+    annotation.Width = 100;  // Set the width for the stamp
+    annotation.Height = 50;  // Set the height for the stamp
+    annotation.setImage('https://example.com/your-stamp-image.png');  // Path to your stamp image
+
+    const annotationManager = viewer.getAnnotationManager();
+    annotationManager.addAnnotation(annotation);
+    annotationManager.redrawAnnotation(annotation);
+  };
+
+  // Handle share request with encryption
   const handleShareRequest = async () => {
-    if (!recipientEmail || !isFileUploaded) {
-      alert('Please upload a file and provide recipient email!');
+    if (!recipientEmail || !isFileUploaded || !password) {
+      alert('Please upload a file, provide recipient email, and enter a password!');
       return;
     }
-  
+
+    setIsSending(true);  // Start sending process
+
     const documentViewer = instance.Core.documentViewer;
-    const annotManager = instance.Core.annotationManager;
     const doc = documentViewer.getDocument();
-  
+
     if (!doc) {
       alert('No document is loaded.');
+      setIsSending(false);  // End sending process
       return;
     }
-  
+
     try {
-      // Step 1: Flatten annotations into the document
-      const xfdfString = await annotManager.exportAnnotations(); // Export annotations
-      const options = { xfdfString }; // Pass XFDF to embed annotations into the PDF
-  
-      // Step 2: Retrieve the updated PDF with annotations embedded
-      const fileData = await doc.getFileData(options);
-  
-      // Step 3: Convert the fileData to a Blob
-      const blob = new Blob([fileData], { type: 'application/pdf' });
-  
-      // Step 4: Prepare formData for sending the PDF
+      const annotationManager = documentViewer.getAnnotationManager();
+      const xfdfString = await annotationManager.exportAnnotations();
+
+      const pdfBuffer = await doc.getFileData({ xfdfString });
+      const pdfDoc = await instance.Core.PDFNet.PDFDoc.createFromBuffer(pdfBuffer);
+      pdfDoc.initSecurityHandler();
+
+      const securityHandler = await instance.Core.PDFNet.SecurityHandler.createDefault();
+      securityHandler.changeUserPasswordUString(password);
+
+      securityHandler.setPermission(instance.Core.PDFNet.SecurityHandler.Permission.e_print, true);
+      securityHandler.setPermission(instance.Core.PDFNet.SecurityHandler.Permission.e_extract_content, false);
+
+      pdfDoc.setSecurityHandler(securityHandler);
+
+      const encryptedBuffer = await pdfDoc.saveMemoryBuffer(instance.Core.PDFNet.SDFDoc.SaveOptions.e_linearized);
+
+      const blob = new Blob([encryptedBuffer], { type: 'application/pdf' });
+
       const formData = new FormData();
-      formData.append('pdf', blob, 'document.pdf');
+      formData.append('pdf', blob, 'encrypted-document.pdf');
       formData.append('email', recipientEmail);
       formData.append('message', message);
-  
-      // Step 5: Send the formData to the backend
+
       const response = await fetch('http://localhost:3000/api/send-pdf', {
         method: 'POST',
         body: formData,
       });
-  
+
       const result = await response.json();
-  
+
       if (result.success) {
-        alert('PDF shared successfully!');
-        setIsModalOpen(false); // Close the modal upon success
+        alert('Encrypted PDF shared successfully!');
       } else {
-        alert('Failed to share PDF. Please try again.');
+        alert('Failed to share the encrypted PDF. Please try again.');
       }
     } catch (err) {
-      console.error('Error while sharing the document:', err);
-      alert('An error occurred while sharing the document.');
+      console.error('Error while sharing the encrypted document:', err);
+      alert('An error occurred while sharing the encrypted document.');
+    } finally {
+      setIsSending(false);  // End sending process
+      setIsModalOpen(false);  // Close the modal
     }
   };
-  
-  
-
 
   return (
     <div className="pdf-upload">
       {/* Top Navbar */}
       <div className="top-navbar">
-        <div className="welcome-message">
-           Welcome to the PDF Editor
-        </div>
+        <div className="welcome-message">Welcome to the PDF Editor</div>
         {isFileUploaded && (
           <button
             className="share-button-topbar"
@@ -125,7 +199,6 @@ const PdfUpload = () => {
           </button>
         )}
       </div>
-
 
       {/* Drag and Drop Section */}
       {!isFileUploaded && (
@@ -155,10 +228,9 @@ const PdfUpload = () => {
       <div
         className="viewer-container"
         ref={viewerRef}
-        style={{ display: isFileUploaded ? 'block' : 'none' }}
+        style={{ display: isFileUploaded ? 'block' : 'none', height: '100vh', width: '100%' }}
+        onClick={handleInsert}  
       ></div>
-
-
 
       {/* Modal for Sharing */}
       {isModalOpen && (
@@ -175,6 +247,15 @@ const PdfUpload = () => {
               />
             </label>
             <label>
+              Password:
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter password for encryption"
+              />
+            </label>
+            <label>
               Message (optional):
               <textarea
                 value={message}
@@ -183,10 +264,17 @@ const PdfUpload = () => {
               ></textarea>
             </label>
             <div className="modal-actions">
-              <button onClick={handleShareRequest} className="send-button">
-                Send
+              <button
+                onClick={handleShareRequest}
+                className="send-button"
+                disabled={isSending}  // Disable the button during sending
+              >
+                {isSending ? 'Sending...' : 'Send'}
               </button>
-              <button onClick={() => setIsModalOpen(false)} className="cancel-button">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="cancel-button"
+              >
                 Cancel
               </button>
             </div>

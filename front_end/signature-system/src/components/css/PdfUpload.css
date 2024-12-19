@@ -118,8 +118,13 @@
 
 /* Viewer Container */
 .viewer-container {
+  position: relative;
   width: 100%;
-  height: 100vh; /* Adjust height considering navbar */
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 /* Dark Theme Modal */
 .modal {
