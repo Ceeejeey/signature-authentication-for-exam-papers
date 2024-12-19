@@ -3,7 +3,10 @@ import SignUpPage from './auth/signup';
 import SignInPage from './auth/SignInPage';
 import LecturerDashboard from './lecturer/DashBoard';
 import HomePage from './HomePage';
+import suppressResizeObserverError from './suppressResizeObserverError';
 
+// Suppress the ResizeObserver error
+suppressResizeObserverError();
 function App() {
 
  
