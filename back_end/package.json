@@ -23,6 +23,8 @@
     "express-flash": "^0.0.2",
     "express-session": "^1.18.1",
     "express-validator": "^7.2.0",
+    "fs": "^0.0.1-security",
+    "googleapis": "^144.0.0",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
@@ -30,7 +32,6 @@
     "mysql": "^2.18.1",
     "mysql2": "^3.11.3",
     "nodemailer": "^6.9.15"
-    
   },
   "devDependencies": {
     "@babel/core": "^7.14.6",
